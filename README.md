@@ -1,8 +1,10 @@
-# Inventory — Backend
+# Inventory
 
-Inventory management system: **stores** and **products** (name, category, price, quantity). REST API with filtering, pagination, and a store summary aggregation.
+Inventory management system: **stores** and **products** (name, category, price, quantity). REST API with filtering, pagination, and a store summary aggregation; React client in `client/`.
 
 ## Stack
+
+**Backend (root)**
 
 - **Runtime:** Node.js (ESM)
 - **Framework:** Fastify 5
@@ -10,7 +12,16 @@ Inventory management system: **stores** and **products** (name, category, price,
 - **Persistence:** PostgreSQL (`pg` driver)
 - **Language:** TypeScript (strict mode)
 
+**Client (`client/`)**
+
+- React, Vite, TanStack Query, React Hook Form + Zod, Radix UI, Tailwind
+
 ## Project structure
+
+- **Root** — Backend API (Fastify, Postgres).
+- **`client/`** — Frontend app (React, Vite); separate `package.json` and scripts.
+
+Backend source:
 
 ```
 src/
@@ -40,16 +51,28 @@ Schema is applied via **migrations** on startup (see `migrations/`). You can als
 
 **Seed data:** On first start (when no stores exist), the app loads example data: 3 stores and 9 products across categories (Electronics, Produce, Bakery, Home, Office, Travel, Grocery). Reviewers can call the API immediately. To re-seed a fresh DB: `pnpm run seed`.
 
+### Client
+
+The React UI lives in **`client/`**. Run it alongside the API:
+
+```bash
+cd client
+pnpm install
+pnpm dev
+```
+
+The app will be at **http://localhost:3000**.
+
 ### Docker (single command)
 
-Runs PostgreSQL and the API; no local Node or Postgres needed:
+Runs PostgreSQL, the API, no local Node or Postgres needed:
 
 ```bash
 docker compose up --build
 ```
 
-- API: **http://localhost:8080**
-- Postgres: `localhost:5433` (user `postgres`, password `postgres`, db `inventory`)
+- **API:** http://localhost:8080
+- **Postgres:** `localhost:5433` (user `postgres`, password `postgres`, db `inventory`)
 
 Stop with `Ctrl+C` or `docker compose down`.
 
@@ -62,11 +85,13 @@ Stop with `Ctrl+C` or `docker compose down`.
 | `pnpm start`      | Run production build           |
 | `pnpm migrate`    | Run pending DB migrations      |
 | `pnpm seed`       | Load seed data (if DB has no stores) |
+| `pnpm test`       | Run tests (Vitest)              |
+| `pnpm openapi:generate` | Write OpenAPI spec to `openapi.json` |
 | `pnpm typecheck`  | Type-check only (no emit)      |
 
 ## API
 
-**OpenAPI docs (Swagger UI):** [http://localhost:3000/documentation](http://localhost:3000/documentation) (or your host/port). The spec is built statically from `src/openapi/spec.ts`. To dump it to a file: `pnpm run openapi:generate` (writes `openapi.json`).
+**OpenAPI docs (Swagger UI):** When running locally use [http://localhost:8080/documentation](http://localhost:8080/documentation); with Docker use [http://localhost:8080/documentation](http://localhost:8080/documentation). The spec is built statically from `src/openapi/spec.ts`. To dump it to a file: `pnpm run openapi:generate` (writes `openapi.json`).
 
 Base prefix: **`/api`**
 
@@ -101,6 +126,16 @@ Base prefix: **`/api`**
 4. **Plugins** — Add shared behavior in `src/plugins/` and register in `src/plugins/index.ts`.
 
 Validator and serializer compilers for Zod are set once in `app.ts`, so route handlers get automatic validation and typed responses when using the Zod type provider.
+
+## Decisions & trade-offs
+
+- **Fastify + Zod** — Fastify is fast and plugin-based; Zod gives a single source of truth for validation and types and integrates with Fastify via `fastify-type-provider-zod`. Validation errors are automatic and type-safe.
+- **PostgreSQL + raw `pg`** — No ORM to keep the scope small and SQL explicit; migrations handle schema changes. Repos encapsulate queries so switching to an ORM later would be localized.
+- **Static OpenAPI spec** — The spec is generated in code (`src/openapi/spec.ts`) and served in static mode so Swagger UI always has a full document.
+- **Migrations on startup** — Pending migrations run in `initDb()` so `docker compose up` and local dev stay in sync without a separate migrate step.
+- **Seed only when empty** — Seed runs on startup only when there are no stores, so reviewers get data on first run and existing data is never overwritten.
+
+**Not included (production would add):** rate limiting, request IDs, health check that hits the DB, structured error codes in a single JSON shape, E2E tests against a real DB.
 
 ## Migrations
 
