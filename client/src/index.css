@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+/* Radix Select trigger/content styling */
+[data-radix-select-trigger] {
+  @apply inline-flex h-9 w-full max-w-[20rem] items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1;
+}
+[data-radix-select-content] {
+  @apply z-50 max-h-60 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white shadow-md;
+}
+[data-radix-select-item] {
+  @apply relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[highlighted]:bg-gray-100;
+}
+
+/* Toast viewport for Radix Toast */
+[data-radix-toast-viewport] {
+  @apply fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:max-w-[420px];
+}
